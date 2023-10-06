@@ -1,0 +1,22 @@
+
+<launch>
+  <group ns="ds4">
+    <arg name="addr" default="" />
+    <arg name="stamped" default="false" />
+
+    <include file="$(find ds4_driver)/launch/ds4_driver.launch" >
+      <arg name="addr" value="$(arg addr)" />
+      <arg name="use_standard_msgs" value="false" />
+    </include>
+
+    <node pkg="ds4_driver" type="ds4_twist_node.py" name="ds4_twist" output="screen" >
+      <rosparam command="load" file="$(find vitulus_ds4)/config/twist_2dof.yaml" />
+      <param name="stamped" value="$(arg stamped)" />
+      <remap from="cmd_vel" to="/cmd_vel" />
+    </node>
+
+    <node pkg="vitulus_ds4" type="node_ds4" name="node_ds4" output="screen" >
+    </node>
+  </group>
+</launch>
+

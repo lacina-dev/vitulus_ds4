@@ -1,0 +1,161 @@
+#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Bool, String, Int16
+import sys
+import signal
+from ds4_driver.msg import Status, Feedback
+from vitulus_msgs.msg import Mower
+
+
+class Node:
+
+    def __init__(self):
+        self.pub_ds4_feedback = rospy.Publisher('/ds4/set_feedback', Feedback, queue_size=1)
+        self.sub_ds4_status = rospy.Subscriber("/ds4/status", Status, self.callback_ds4_status, queue_size=1)
+        self.pub_mower_set_motor_on = rospy.Publisher('/mower/set_motor_on', Bool, queue_size=10)
+        self.pub_mower_set_motor_dir = rospy.Publisher('/mower/set_motor_dir', String, queue_size=10)
+        self.pub_mower_set_power = rospy.Publisher('/mower/set_power', Bool, queue_size=10)
+        self.pub_mower_set_cut_height = rospy.Publisher('/mower/set_cut_height', Int16, queue_size=10)
+        self.pub_mower_set_motor_rpm = rospy.Publisher('/mower/set_motor_rpm', Int16, queue_size=10)
+        self.sub_mower_status = rospy.Subscriber("/mower/status", Mower, self.callback_mower_status)
+        self.mower_current_height = 0
+        self.mower_moto_rpm = 0
+        self.last_button_cross = 0
+        self.last_button_triangle = 0
+        self.last_button_square = 0
+        self.last_button_circle = 0
+        self.last_button_dpad_up = 0
+        self.last_button_dpad_down = 0
+        self.last_button_dpad_left = 0
+        self.last_button_dpad_right = 0
+
+    def callback_mower_status(self, msg):
+        self.mower_current_height = msg.current_height
+        self.mower_moto_rpm = msg.setpoint_rpm
+
+    def callback_ds4_status(self, msg):
+        # Set mower off
+        if self.last_button_cross == 0 and msg.button_cross == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 0
+            feedback_msg.led_g = 0
+            feedback_msg.led_b = 255
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.0
+            feedback_msg.led_flash_off = 0.0
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_power = Bool()
+            msg_set_power.data = False
+            self.pub_mower_set_power.publish(msg_set_power)
+        # Set mower on
+        if self.last_button_triangle == 0 and msg.button_triangle == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 0
+            feedback_msg.led_g = 255
+            feedback_msg.led_b = 0
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.5
+            feedback_msg.led_flash_off = 0.5
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_power = Bool()
+            msg_set_power.data = True
+            self.pub_mower_set_power.publish(msg_set_power)
+        # Turn mower motor off
+        if self.last_button_square == 0 and msg.button_square == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 0
+            feedback_msg.led_g = 255
+            feedback_msg.led_b = 0
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.5
+            feedback_msg.led_flash_off = 0.5
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_motor_on = Bool()
+            msg_set_motor_on.data = False
+            self.pub_mower_set_motor_on.publish(msg_set_motor_on)
+        # Turn mower motor on
+        if self.last_button_circle == 0 and msg.button_circle == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_rumble = True
+            feedback_msg.rumble_small = 10.0
+            feedback_msg.rumble_duration = 1.0
+            feedback_msg.set_rumble = True
+            feedback_msg.rumble_big = 10.0
+            feedback_msg.rumble_duration = 1.0
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 255
+            feedback_msg.led_g = 0
+            feedback_msg.led_b = 0
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.5
+            feedback_msg.led_flash_off = 0.5
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_motor_on = Bool()
+            msg_set_motor_on.data = True
+            self.pub_mower_set_motor_on.publish(msg_set_motor_on)
+        # Cut height up
+        if self.last_button_dpad_up == 0 and msg.button_dpad_up == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 0
+            feedback_msg.led_g = 255
+            feedback_msg.led_b = 0
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.5
+            feedback_msg.led_flash_off = 0.5
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_cut_height = Int16()
+            msg_set_cut_height.data = self.mower_current_height + 10
+            self.pub_mower_set_cut_height.publish(msg_set_cut_height)
+        # Cut height down
+        if self.last_button_dpad_down == 0 and msg.button_dpad_down == 1:
+            feedback_msg = Feedback()
+            feedback_msg.set_led = True
+            feedback_msg.led_r = 0
+            feedback_msg.led_g = 255
+            feedback_msg.led_b = 0
+            feedback_msg.set_led_flash = True
+            feedback_msg.led_flash_on = 0.5
+            feedback_msg.led_flash_off = 0.5
+            self.pub_ds4_feedback.publish(feedback_msg)
+            msg_set_cut_height = Int16()
+            msg_set_cut_height.data = self.mower_current_height - 10
+            self.pub_mower_set_cut_height.publish(msg_set_cut_height)
+        # Motor rpm down
+        if self.last_button_dpad_left == 0 and msg.button_dpad_left == 1:
+            msg_set_motor_rpm = Int16()
+            msg_set_motor_rpm.data = self.mower_moto_rpm - 200
+            self.pub_mower_set_motor_rpm.publish(msg_set_motor_rpm)
+        # Motor rpm up
+        if self.last_button_dpad_right == 0 and msg.button_dpad_right == 1:
+            msg_set_motor_rpm = Int16()
+            msg_set_motor_rpm.data = self.mower_moto_rpm + 200
+            self.pub_mower_set_motor_rpm.publish(msg_set_motor_rpm)
+
+        self.last_button_cross = msg.button_cross
+        self.last_button_triangle = msg.button_triangle
+        self.last_button_square = msg.button_square
+        self.last_button_circle = msg.button_circle
+
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('ds4_node')
+        rospy.loginfo("<{}> Initialising...".format(rospy.get_caller_id()))
+        node = Node()
+        r = rospy.Rate(1)  # Hz
+
+        def signal_handler():
+            rospy.signal_shutdown("end")
+            sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+
+        while not rospy.is_shutdown():
+            r.sleep()
+
+    except rospy.ROSInterruptException:
+        rospy.logerr("<{}> error.".format(rospy.get_caller_id()))

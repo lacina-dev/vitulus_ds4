@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>vitulus_ds4</name>
+  <version>0.0.1</version>
+  <description>Vitulus ds4 controller.</description>
+
+  <maintainer email="robert@lacina.dev">Robert Lacina</maintainer>
+  <license>Apache 2.0</license>
+  <author email="robert@lacina.dev">Robert Lacina</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>roscpp</depend>
+  <depend>ds4_driver</depend>
+  <exec_depend>rosserial_python</exec_depend>
+</package>

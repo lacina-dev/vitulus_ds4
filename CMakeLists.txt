@@ -76,7 +76,7 @@ catkin_package(
 # Install
 ################################################################################
 
-install(DIRECTORY launch config rviz
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

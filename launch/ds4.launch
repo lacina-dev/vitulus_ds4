@@ -12,7 +12,8 @@
     <node pkg="ds4_driver" type="ds4_twist_node.py" name="ds4_twist" output="screen" >
       <rosparam command="load" file="$(find vitulus_ds4)/config/twist_2dof.yaml" />
       <param name="stamped" value="$(arg stamped)" />
-      <remap from="cmd_vel" to="/cmd_vel" />
+      <!-- /ds4/cmd_vel: the highest-priority input of vitulus_base cmd_vel_mux
+           (a deflected stick beats all software; centred-stick zeros are ignored). -->
     </node>
 
     <node pkg="vitulus_ds4" type="node_ds4" name="node_ds4" output="screen" >
